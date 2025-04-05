@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Detection Portal</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'emotion_recognition/styles.css' %}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh; /* Full height */
+            overflow: hidden; /* Prevent body overflow */
+        }
+
+        /* Top Navigation Bar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #000; /* Black background */
+            color: white; 
+            padding: 15px 30px;
+            position: fixed; /* Fix navbar at the top */
+            width: 100%; /* Full width */
+            top: 0; /* Stick to the top */
+            z-index: 1000; /* Stay above other content */
+        }
+
+        .navbar h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .user-name {
+            font-size: 18px;
+        }
+
+        /* Main Layout */
+        .main {
+            display: flex;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            margin-top: 60px; /* Space for fixed navbar */
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: #f4f4f4; /* Light gray */
+            padding: 15px;
+            width: 220px; /* Fixed width for sidebar */
+            border-right: 1px solid #ddd; /* Light border */
+            height: calc(100vh - 60px); /* Full height minus navbar */
+            position: fixed; /* Fix sidebar on the left */
+            top: 60px; /* Adjust for navbar height */
+            overflow-y: auto; /* Allow scrolling */
+        }
+
+        .sidebar h2 {
+            color: #003366; /* Dark blue */
+            margin-bottom: 10px; 
+        }
+
+        .sidebar a {
+            display: block;
+            margin: 10px 0;
+            color: #003366; 
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #ddd; 
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 240px; /* Space for sidebar */
+            padding: 20px;
+            height: calc(100vh - 60px); /* Full height minus navbar */
+            background-color: #ffffff; /* White background */
+            overflow-y: auto; /* Scroll if content overflows */
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+        }
+
+        /* Upload Section */
+        .upload-section {
+            border: 1px dashed #003366; /* Dashed border for upload section */
+            background-color: #f9f9f9; /* Light gray */
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px; /* Space above */
+        }
+
+        .upload-results {
+            display: none; /* Hidden by default */
+            margin-top: 20px; /* Space above */
+            background-color: #e9ffe9; /* Light green */
+            padding: 15px;
+            border-radius: 5px; /* Rounded corners */
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Emotion Detection</h1>
+        <div class="user-name">{{ request.user.username }}</div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <h2>Dashboard</h2>
+            <a href="#" onclick="showContent('home')">Home</a>
+            <a href="#" onclick="showContent('functionalities')">System Functionalities</a>
+            <a href="#" onclick="showContent('application')">Application Areas</a>
+            <a href="#" onclick="showContent('upload')">Upload Sound</a>
+        </div>
+
+        <div class="content" id="contentArea">
+            <h2>Welcome to the Emotion Detection Portal</h2>
+            <p>This application analyzes audio files to detect emotional states based on voice characteristics. Using state-of-the-art algorithms, the system can identify various emotions exhibited in speech, aiding research and application in fields like psychology and artificial intelligence.</p>
+            <p>This tool enables users to upload audio files and receive instant feedback on emotional contents, making it useful in various practical scenarios, including mental health assessments, voice-activated interfaces, and emotion-aware applications.</p>
+
+            <div class="upload-section" id="uploadSection" style="display: none;">
+                <h2>Upload Sound</h2>
+                <input type="file" id="soundUpload" accept="audio/*" required><br><br>
+                <button onclick="uploadSound()">Upload Sound</button>
+
+                <div class="upload-results" id="resultContainer" style="display: none;">
+                    <h3>Result:</h3>
+                    <p id="resultText">Your result will appear here.</p>
+                    <button onclick="closeResult()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showContent(contentType) {
+            const contentArea = document.getElementById('contentArea');
+            const uploadSection = document.getElementById('uploadSection');
+
+            if (contentType === 'home') {
+                contentArea.innerHTML = `
+                    <h2>Welcome to the Emotion Detection Portal</h2>
+                    <p>This application analyzes audio files to detect emotional states...</p>`;
+            } else if (contentType === 'functionalities') {
+                contentArea.innerHTML = `
+                    <h2>System Functionalities</h2>
+                    <p>This system analyzes audio files and detects emotions...</p>`;
+            } else if (contentType === 'application') {
+                contentArea.innerHTML = `
+                    <h2>Application Areas</h2>
+                    <p>This system can be applied in various fields...</p>`;
+            } else if (contentType === 'upload') {
+                uploadSection.style.display = 'block'; // Show upload section
+                contentArea.scrollTop = contentArea.scrollHeight; // Scroll to the upload section
+            }
+        }
+
+        function uploadSound() {
+            const soundFile = document.getElementById('soundUpload').files[0];
+            const formData = new FormData();
+            formData.append('audio_file', soundFile);
+
+            // Make an AJAX call to upload the sound for prediction
+            fetch("{% url 'predict_emotion' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();  // Parse the JSON response
+            })
+            .then(data => {
+                // Display the result
+                document.getElementById('resultText').textContent = data.result; // Get result from JSON response
+                document.getElementById('resultContainer').style.display = 'block'; // Show results
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred while processing the audio file.");
+            });
+        }
+
+        function closeResult() {
+            document.getElementById('resultContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

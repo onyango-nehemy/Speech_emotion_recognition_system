@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'emotion_recognition/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <form method="post">
+            {% csrf_token %}
+            <h2>User Registration</h2>
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" name="username" required>
+            </div>
+            <div>
+                <label for="password1">Password:</label>
+                <input type="password" name="password1" required>
+            </div>
+            <div>
+                <label for="password2">Confirm Password:</label>
+                <input type="password" name="password2" required>
+            </div>
+            <input type="submit" value="Register">
+            <a href="{% url 'login' %}">Already have an account? Login here</a>
+        </form>
+    </div>
+</body>
+</html>
